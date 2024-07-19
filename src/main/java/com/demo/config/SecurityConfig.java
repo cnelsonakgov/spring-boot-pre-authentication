@@ -6,8 +6,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.security.web.authentication.preauth.RequestHeaderAuthenticationFilter;
@@ -16,35 +16,37 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // configure pre-authentication flow
                 .addFilterBefore(siteminderFilter(), RequestHeaderAuthenticationFilter.class)
-                .authorizeRequests()
-                // allow access to actuator endpoints
-                .antMatchers("/actuator/**").permitAll()
-                // allow access to favicon.ico endpoint
-                .antMatchers("/favicon.ico").permitAll()
-                // allow access to v1 endpoints, still subject to authorization check defined on the method level
-                .antMatchers("/v1/**").permitAll()
-                // deny all other endpoints
-                .anyRequest().denyAll()
-        ;
+                .authorizeRequests(requests -> requests
+                        // allow access to actuator endpoints
+                        .antMatchers("/actuator/**").permitAll()
+                        // allow access to favicon.ico endpoint
+                        .antMatchers("/favicon.ico").permitAll()
+                        // allow access to v1 endpoints, still subject to authorization check defined on
+                        // the method level
+                        .antMatchers("/v1/**").permitAll()
+                        // deny all other endpoints
+                        .anyRequest().denyAll());
 
         // alternatively, configure auth here if not using method level security
-//        http
-//                .addFilterAfter(siteminderFilter(), RequestHeaderAuthenticationFilter.class)
-//                .authorizeRequests()
-//                .antMatchers("/v1/**")
-//                .hasRole("ADMIN")
+        // http
+        // .addFilterAfter(siteminderFilter(), RequestHeaderAuthenticationFilter.class)
+        // .authorizeRequests()
+        // .antMatchers("/v1/**")
+        // .hasRole("ADMIN")
         ;
+        return http.build();
     }
 
     /**
-     * Creates RequestHeaderAuthenticationFilter bean and specifies which HTTP headers are for communicating
+     * Creates RequestHeaderAuthenticationFilter bean and specifies which HTTP
+     * headers are for communicating
      * principal and credential information
      *
      * @return
@@ -62,14 +64,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         requestHeaderAuthenticationFilter.setAuthenticationManager(authenticationManager());
 
         // do not throw exception when header is not present.
-        // one use case is for actuator endpoints and static assets where security headers are not required.
+        // one use case is for actuator endpoints and static assets where security
+        // headers are not required.
         requestHeaderAuthenticationFilter.setExceptionIfHeaderMissing(false);
 
         return requestHeaderAuthenticationFilter;
     }
 
-    @Bean
-    @Override
+    @Bean(name = "authenticationManager")
     protected AuthenticationManager authenticationManager() {
         final List<AuthenticationProvider> providers = new ArrayList<>(1);
         providers.add(preAuthAuthProvider());

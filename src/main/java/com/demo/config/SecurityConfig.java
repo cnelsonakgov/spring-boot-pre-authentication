@@ -23,14 +23,14 @@ public class SecurityConfig {
         http
                 // configure pre-authentication flow
                 .addFilterBefore(siteminderFilter(), RequestHeaderAuthenticationFilter.class)
-                .authorizeRequests(requests -> requests
+                .authorizeHttpRequests((authorize) -> authorize
                         // allow access to actuator endpoints
-                        .antMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         // allow access to favicon.ico endpoint
-                        .antMatchers("/favicon.ico").permitAll()
+                        .requestMatchers("/favicon.ico").permitAll()
                         // allow access to v1 endpoints, still subject to authorization check defined on
                         // the method level
-                        .antMatchers("/v1/**").permitAll()
+                        .requestMatchers("/v1/**").permitAll()
                         // deny all other endpoints
                         .anyRequest().denyAll());
 
@@ -38,7 +38,7 @@ public class SecurityConfig {
         // http
         // .addFilterAfter(siteminderFilter(), RequestHeaderAuthenticationFilter.class)
         // .authorizeRequests()
-        // .antMatchers("/v1/**")
+        // .requestMatchers("/v1/**")
         // .hasRole("ADMIN")
         ;
         return http.build();
